@@ -1,0 +1,146 @@
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"path/filepath"
+	"regexp"
+)
+
+// Position represents the location of a word in the file
+type Position struct {
+	Line   int
+	Column int
+}
+
+// Occurrence represents where a word appears
+type Occurrence struct {
+	Filename  string
+	Positions []Position
+}
+
+// InvertedIndex maps words to their occurrences
+
+type InvertedIndex map[string][]Occurrence
+
+// createInvertedIndex creates an inverted index from a Java file
+
+func createInvertedIndex(filePath string) (InvertedIndex, error) {
+	// Get absolute path
+	absPath, err := filepath.Abs(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("error getting absolute path: %v", err)
+	}
+
+	file, err := os.Open(absPath)
+	if err != nil {
+		return nil, fmt.Errorf("error opening file: %v", err)
+	}
+	defer file.Close()
+
+	// Initialize the inverted index
+	index := make(InvertedIndex)
+
+	// Regular expression for Java identifiers
+	identifierRegex := regexp.MustCompile(`[a-zA-Z_$][a-zA-Z0-9_$]*`)
+
+	scanner := bufio.NewScanner(file)
+	lineNum := 0
+
+	// Get the base filename for storage
+	filename := filepath.Base(absPath)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		lineNum++
+
+		// Find all identifiers in the line
+		matches := identifierRegex.FindAllStringIndex(line, -1)
+
+		for _, match := range matches {
+			word := line[match[0]:match[1]]
+
+			// Create position for this occurrence
+			pos := Position{
+				Line:   lineNum,
+				Column: match[0] + 1,
+			}
+
+			// Add to index
+			found := false
+			for i, occ := range index[word] {
+				if occ.Filename == filename {
+					index[word][i].Positions = append(index[word][i].Positions, pos)
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				index[word] = append(index[word], Occurrence{
+					Filename:  filename,
+					Positions: []Position{pos},
+				})
+			}
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading file: %v", err)
+	}
+
+	return index, nil
+}
+
+// saveIndexToFile saves the inverted index to a file
+
+func saveIndexToFile(index InvertedIndex, outputPath string) error {
+	file, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("error creating file: %v", err)
+	}
+	defer file.Close()
+
+	writer := bufio.NewWriter(file)
+	defer writer.Flush()
+
+	for word, occurrences := range index {
+		_, _ = writer.WriteString(fmt.Sprintf("Identifier: %s\n", word))
+		for _, occ := range occurrences {
+			_, _ = writer.WriteString(fmt.Sprintf("  File: %s\n", occ.Filename))
+			_, _ = writer.WriteString("  Positions:\n")
+			for _, pos := range occ.Positions {
+				_, _ = writer.WriteString(fmt.Sprintf("    Line %d, Column %d\n", pos.Line, pos.Column))
+			}
+		}
+		_, _ = writer.WriteString("\n")
+	}
+
+	return nil
+}
+
+func main() {
+	// Specify the input file path and output file path
+
+	inputFilePath := "./javafiles_project_1/Project1_File1.java" // Replace with your Java file path
+	outputFilePath := "./inverted_index.txt"                     // Replace with your desired output file path
+
+	// Create inverted index
+
+	index, err := createInvertedIndex(inputFilePath)
+	if err != nil {
+		fmt.Printf("Error creating index: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Save the index to a file
+	
+	err = saveIndexToFile(index, outputFilePath)
+	if err != nil {
+		fmt.Printf("Error saving index to file: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Inverted index saved to '%s'\n", outputFilePath)
+}

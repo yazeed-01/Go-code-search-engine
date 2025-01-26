@@ -1,0 +1,176 @@
+
+
+type Processor interface {
+	Process(file *File) []Token
+}
+
+// Factory Pattern for Processors
+
+type ProcessorFactory struct{}
+
+func (pf *ProcessorFactory) GetProcessor(tokenType string) Processor {
+	switch tokenType {
+	case "class":
+		return &ClassProcessor{} // use regular expression
+	case "method":
+		return &MethodProcessor{} // use regular expression
+	case "variable":
+		return &VariableProcessor{}
+	case "loop":
+		return &LoopProcessor{}
+	default:
+		return nil
+	}
+}
+
+// Strategy Pattern for Search Algorithms
+
+type ExactMatchSearch struct{}
+
+func (ems *ExactMatchSearch) Search(query string, tokens []Token) []Token {
+	var results []Token
+	for _, token := range tokens {
+		if token.Content == query {
+			results = append(results, token)
+		}
+	}
+	return results
+}
+
+type SubstringMatchSearch struct{}
+
+// import "search"
+
+//searchEngine := search.NewSubstringSearchEngine(tokens)
+// query := "var"
+//results := searchEngine.Search(query)
+/*
+func (s *SubstringSearchEngine) Search(query string) []Token {
+    query = strings.ToLower(query) // Case insensitive
+    results := []Token{}
+
+    for _, token := range s.tokens {
+        if strings.Contains(strings.ToLower(token.Content), query) {
+            results = append(results, token)
+        }
+    }
+    return results
+}
+*/
+
+// Decorator Pattern for Additional Search Functionalities
+type SearchAlgorithm interface {
+	Search(query string, tokens []Token) []Token
+}
+
+type SearchDecorator struct {
+	wrapped SearchAlgorithm
+}
+
+func (sd *SearchDecorator) Search(query string, tokens []Token) []Token {
+	results := sd.wrapped.Search(query, tokens)
+	// frequency , filterType: "class"
+	return results
+}
+
+
+// **********************************
+// **********************************
+// **********************************
+
+// Concrete Processors
+
+type ClassProcessor struct{}
+
+func (cp *ClassProcessor) Process(file *File) []Token {
+	// Logic to extract class tokens from file
+	return nil
+}
+
+type MethodProcessor struct{}
+
+func (mp *MethodProcessor) Process(file *File) []Token {
+	// Logic to extract method tokens from file
+	return nil
+}
+
+type VariableProcessor struct{}
+
+func (vp *VariableProcessor) Process(file *File) []Token {
+	// Logic to extract variable tokens from file
+	return nil
+}
+
+type LoopProcessor struct{}
+
+func (lp *LoopProcessor) Process(file *File) []Token {
+	// Logic to extract loop tokens from file
+	return nil
+}
+
+
+// **********************************
+// **********************************
+// **********************************
+
+
+// Core Models
+
+type Project struct {
+	ID        int       `json:"id" gorm:"primaryKey"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	Files     []File    `json:"files" gorm:"foreignKey:ProjectID"`
+}
+
+type File struct {
+	ID        int       `json:"id" gorm:"primaryKey"`
+	Name      string    `json:"name"`
+	ProjectID int       `json:"project_id"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type Token struct {
+	ID      int    `json:"id" gorm:"primaryKey"`
+	FileID  int    `json:"file_id"`
+	Content string `json:"content"`
+	Line    int    `json:"line"`
+}
+
+type ClassToken struct {
+	ID            int    `json:"id" gorm:"primaryKey"`
+	TokenID       int    `json:"token_id"`
+	Name          string `json:"name"`
+	ParentClassID int    `json:"parent_class_id"`
+	Positions     string `json:"positions"`
+}
+
+type MethodToken struct {
+	ID         int    `json:"id" gorm:"primaryKey"`
+	TokenID    int    `json:"token_id"`
+	Name       string `json:"name"`
+	ReturnType string `json:"return_type"`
+	Positions  string `json:"positions"`
+	Parameters string `json:"parameters"`
+}
+
+type VariableToken struct {
+	ID       int    `json:"id" gorm:"primaryKey"`
+	TokenID  int    `json:"token_id"`
+	Name     string `json:"name"`
+	DataType string `json:"data_type"`
+	Position string `json:"position"`
+}
+
+type DataTypeToken struct {
+	ID      int    `json:"id" gorm:"primaryKey"`
+	TokenID int    `json:"token_id"`
+	Type    string `json:"type"`
+}
+
+type LoopToken struct {
+	Token
+	Type      string `json:"type"` // for, while, do-while
+	StartLine int    `json:"start_line"`
+	EndLine   int    `json:"end_line"`
+}

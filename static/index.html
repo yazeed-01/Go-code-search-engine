@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IntelliJ-like Search</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+
+:root {
+    --primary-color: #61dafb;
+    --secondary-color: #bb86fc;
+    --background-color: #121212;
+    --surface-color: #1e1e1e;
+    --text-color: #e0e0e0;
+    --text-color-secondary: #a0a0a0;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.container {
+    background-color: var(--surface-color);
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    padding: 2rem;
+    width: 80%;
+    max-width: 600px;
+}
+
+h1 {
+    text-align: center;
+    color: var(--primary-color);
+    margin-bottom: 2rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.search-container, .upload-container {
+    display: flex;
+    margin-bottom: 1rem;
+}
+
+input[type="text"], input[type="file"] {
+    flex-grow: 1;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 2px solid var(--primary-color);
+    border-radius: 5px 0 0 5px;
+    outline: none;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+input[type="file"] {
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+input[type="file"]::file-selector-button {
+    background-color: var(--primary-color);
+    color: var(--background-color);
+    border: none;
+    padding: 0.5rem 1rem;
+    margin-right: 1rem;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background-color: darken(var(--primary-color), 10%);
+}
+
+button {
+    background-color: var(--primary-color);
+    color: var(--background-color);
+    border: none;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+button:hover {
+    background-color: darken(var(--primary-color), 10%);
+}
+
+#search-button {
+    border-radius: 0 5px 5px 0;
+}
+
+.search-options {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.option-button {
+    background-color: var(--secondary-color);
+    color: var(--background-color);
+    border: none;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    flex-grow: 1;
+    margin: 0 0.25rem;
+}
+
+.option-button:hover, .option-button.active {
+    background-color: darken(var(--secondary-color), 10%);
+}
+
+#search-results, #upload-result {
+    background-color: var(--surface-color);
+    border: 1px solid var(--text-color-secondary);
+    border-radius: 5px;
+    padding: 1rem;
+    margin-top: 1rem;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+nav {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--surface-color);
+    border-radius: 25px;
+    padding: 0.5rem;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+nav a {
+    color: var(--text-color);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    transition: background-color 0.3s ease;
+}
+
+nav a.active, nav a:hover {
+    background-color: var(--primary-color);
+    color: var(--background-color);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--background-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: darken(var(--primary-color), 10%);
+}
+
+    </style>
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Code Search Engine</h1>
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search...">
+            <button id="search-button"><i class="fas fa-search"></i></button>
+        </div>
+        <div class="search-options">
+            <button class="option-button" data-option="method">Method</button>
+            <button class="option-button" data-option="class">Class</button>
+            <button class="option-button" data-option="file">File</button>
+            <button class="option-button" data-option="text">Text</button>
+        </div>
+        <div id="search-results">
+            <!-- Search results will be displayed here -->
+        </div>
+    </div>
+    <nav>
+        <a href="search.html" class="active">Search</a>
+        <a href="upload.html">Upload</a>
+    </nav>
+    <script src="script.js">
+        document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('search-input');
+    const searchButton = document.getElementById('search-button');
+    const searchOptions = document.querySelectorAll('.option-button');
+    const searchResults = document.getElementById('search-results');
+
+    let activeOption = 'method';
+
+    searchOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            searchOptions.forEach(btn => btn.classList.remove('active'));
+            option.classList.add('active');
+            activeOption = option.dataset.option;
+        });
+    });
+
+    searchButton.addEventListener('click', performSearch);
+    searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            performSearch();
+        }
+    });
+
+    function performSearch() {
+        const query = searchInput.value.trim();
+        if (query) {
+            // Simulating search results
+            const results = [
+                `Found in ${activeOption}: ${query}`,
+                `Another result for ${query}`,
+                `Yet another result for ${query}`
+            ];
+            displayResults(results);
+        }
+    }
+
+    function displayResults(results) {
+        searchResults.innerHTML = '';
+        results.forEach(result => {
+            const resultElement = document.createElement('p');
+            resultElement.textContent = result;
+            resultElement.classList.add('fade-in');
+            searchResults.appendChild(resultElement);
+        });
+    }
+});
+
+
+
+    </script>
+</body>
+</html>
+

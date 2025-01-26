@@ -1,0 +1,14 @@
+{
+  "query": "{ orders { id customerID driverID productID quantity status location totalPrice orderDate } }"
+}
+http://localhost:8080/graphql
+Content-Type
+application/json
+POST
+
+{
+  "query": "{ order(id: 50251) { id customerID driverID productID quantity status location totalPrice orderDate } }"
+}
+
+
+

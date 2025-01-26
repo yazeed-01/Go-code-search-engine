@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IntelliJ-like File Upload</title>
+    <style>
+        /* General resets */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+}
+
+body {
+    background-color: #2b2b2b;
+    color: #f8f8f2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    background-color: #3c3f41;
+    padding: 20px 30px;
+    border-radius: 10px;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.container h1 {
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+    color: #d9d9d9;
+}
+
+/* Upload container styling */
+.upload-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    border: 2px dashed #616161;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+#file-path {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: #f8f8f2;
+    font-size: 0.9rem;
+    outline: none;
+    margin-right: 10px;
+}
+
+#file-path::placeholder {
+    color: #757575;
+}
+
+#browse-button {
+    background: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+#browse-button:hover {
+    background: #388e3c;
+}
+
+/* Upload options */
+.upload-options {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.option-button {
+    background: #555555;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+}
+
+.option-button:hover {
+    background: #007acc;
+}
+
+.option-button.active {
+    background: #2979ff;
+}
+
+/* Upload result */
+#upload-result p {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: #a5d6a7;
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Navigation bar */
+nav {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+nav a {
+    color: #9e9e9e;
+    text-decoration: none;
+    margin: 0 10px;
+    font-size: 0.9rem;
+    transition: color 0.3s;
+}
+
+nav a:hover, nav a.active {
+    color: #ffffff;
+}
+
+    </style>
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Code Search Engine</h1>
+        <div class="upload-container">
+            <input type="text" id="file-path" placeholder="File path..." readonly>
+            <button id="browse-button"><i class="fas fa-folder-open"></i></button>
+        </div>
+        <div class="upload-options">
+            <button class="option-button" data-option="local">Local</button>
+            <button class="option-button" data-option="remote">Remote</button>
+            <button class="option-button" data-option="cloud">Cloud</button>
+            <button class="option-button" data-option="git">Git</button>
+        </div>
+        <input type="file" id="file-input" style="display: none;">
+        <div id="upload-result"></div>
+        <div><button id="upload-button">Upload</button></div>
+    </div>
+    <nav>
+        <a href="/search">Search</a>
+        <a href="/upload" class="active">Upload</a>
+    </nav>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const filePath = document.getElementById('file-path');
+            const browseButton = document.getElementById('browse-button');
+            const fileInput = document.getElementById('file-input');
+            const uploadOptions = document.querySelectorAll('.option-button');
+            const uploadResult = document.getElementById('upload-result');
+            const uploadButton = document.getElementById('upload-button');
+
+            let activeOption = 'local';
+            let fileToUpload = null; // Store the file to upload
+
+            uploadOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    uploadOptions.forEach(btn => btn.classList.remove('active'));
+                    option.classList.add('active');
+                    activeOption = option.dataset.option;
+                    updateUploadInterface();
+                });
+            });
+
+            browseButton.addEventListener('click', () => {
+                if (activeOption === 'local') {
+                    fileInput.click();
+                } else {
+                    simulateUpload();
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    filePath.value = e.target.files[0].name;
+                    fileToUpload = e.target.files[0]; // Store the selected file
+                }
+            });
+
+            uploadButton.addEventListener('click', () => {
+                if (fileToUpload) {
+                    uploadFile(fileToUpload); // Call the function to upload the file
+                } else {
+                    uploadResult.innerHTML = '<p class="fade-in">Please select a file first.</p>';
+                }
+            });
+
+            function updateUploadInterface() {
+                switch (activeOption) {
+                    case 'local':
+                        filePath.placeholder = 'Choose a file...';
+                        browseButton.innerHTML = '<i class="fas fa-folder-open"></i>';
+                        break;
+                    case 'remote':
+                        filePath.placeholder = 'Enter remote URL...';
+                        browseButton.innerHTML = '<i class="fas fa-cloud-upload-alt"></i>';
+                        break;
+                    case 'cloud':
+                        filePath.placeholder = 'Select from cloud storage...';
+                        browseButton.innerHTML = '<i class="fas fa-cloud"></i>';
+                        break;
+                    case 'git':
+                        filePath.placeholder = 'Enter git repository URL...';
+                        browseButton.innerHTML = '<i class="fab fa-git-alt"></i>';
+                        break;
+                }
+            }
+
+            function simulateUpload() {
+                const path = filePath.value.trim();
+                if (path) {
+                    uploadResult.innerHTML = `<p class="fade-in">File "${path}" uploaded successfully via ${activeOption} method!</p>`;
+                } else {
+                    uploadResult.innerHTML = '<p class="fade-in">Please select a file or enter a path to upload.</p>';
+                }
+            }
+
+            // Function to upload file to backend using fetch API
+            function uploadFile(file) {
+                const formData = new FormData();
+                formData.append('file', file); // Append the file to formData
+
+                fetch('/upload', { // Your Go server endpoint to handle file upload
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        uploadResult.innerHTML = `<p class="fade-in">File "${file.name}" uploaded successfully!</p>`;
+                    } else {
+                        uploadResult.innerHTML = `<p class="fade-in">Error: ${data.message}</p>`;
+                    }
+                })
+                .catch(error => {
+                    uploadResult.innerHTML = '<p class="fade-in">Error during upload. Please try again.</p>';
+                    console.error('Error:', error);
+                });
+            }
+
+            // Initialize the interface
+            updateUploadInterface();
+        });
+    </script>
+</body>
+
+</html>
